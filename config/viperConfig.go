@@ -2,11 +2,16 @@ package config
 
 import (
 	"GoChat/config/model"
+	"fmt"
 	"github.com/spf13/viper"
 )
 
-// InitViperConfig 初始化viper
-func InitViperConfig() model.GlobalConfig {
+var (
+	Viper = InitViper()
+)
+
+// InitViper 初始化viper
+func InitViper() model.GlobalConfig {
 
 	//实例化viper
 	v := viper.New()
@@ -20,6 +25,7 @@ func InitViperConfig() model.GlobalConfig {
 	if err := v.Unmarshal(&globalConfig); err != nil {
 		panic(err)
 	}
+	fmt.Println(globalConfig.ServerConfig.Port)
 	return globalConfig
 
 }

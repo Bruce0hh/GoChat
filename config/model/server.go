@@ -2,20 +2,20 @@ package model
 
 // GlobalConfig 全局配置
 type GlobalConfig struct {
-	ServerConfig     ServerConfig `mapstructure:"serverConfig"`
-	PostgreSQLConfig string       `mapstructure:"postgreSqlConfig"`
-	MongoDBConfig    string       `mapstructure:"mongodbConfig"`
-	RedisConfig      string       `mapstructure:"redisConfig"`
+	ServerConfig     serverConfig     `mapstructure:"server"`
+	PostgreSQLConfig postgreSQLConfig `mapstructure:"postgreSql"`
+	MongoDBConfig    mongoDBConfig    `mapstructure:"mongodb"`
+	RedisConfig      redisConfig      `mapstructure:"redis"`
 }
 
 // ServerConfig 服务器配置
-type ServerConfig struct {
+type serverConfig struct {
 	Name string `mapstructure:"name"`
 	Port int    `mapstructure:"port"`
 }
 
 // PostgreSQLConfig PGSQL配置
-type PostgreSQLConfig struct {
+type postgreSQLConfig struct {
 	Host     string `mapstructure:"host"`
 	Port     int    `mapstructure:"port"`
 	Name     string `mapstructure:"name"`
@@ -24,7 +24,7 @@ type PostgreSQLConfig struct {
 }
 
 // MongoDBConfig MongoDB配置
-type MongoDBConfig struct {
+type mongoDBConfig struct {
 	Host     string `mapstructure:"host"`
 	Port     int    `mapstructure:"port"`
 	Name     string `mapstructure:"name"`
@@ -33,7 +33,7 @@ type MongoDBConfig struct {
 }
 
 // RedisConfig Redis配置
-type RedisConfig struct {
+type redisConfig struct {
 	Host string `mapstructure:"host"`
 	Port int    `mapstructure:"port"`
 	DB   int    `mapstructure:"db"`
