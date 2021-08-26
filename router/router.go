@@ -1,6 +1,7 @@
 package router
 
 import (
+	"GoChat/controller"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,12 +16,11 @@ func CollectRoute() *gin.Engine {
 
 }
 
-// UserRouter 添加用户相关api集合，前缀“/user”
+// userRouter 添加用户相关api集合，前缀“/user”
 func userRouter(r *gin.RouterGroup) {
-
-	_ = r.Group("user")
+	userRouter := r.Group("user")
 	{
-
+		userRouter.POST("register", controller.Register)
 	}
 
 }
