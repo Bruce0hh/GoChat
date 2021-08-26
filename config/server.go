@@ -1,9 +1,9 @@
-package model
+package config
 
 // GlobalConfig 全局配置
 type GlobalConfig struct {
 	ServerConfig     serverConfig     `mapstructure:"server"`
-	PostgreSQLConfig postgreSQLConfig `mapstructure:"postgreSql"`
+	PostgreSQLConfig postgreSQLConfig `mapstructure:"postgres"`
 	MongoDBConfig    mongoDBConfig    `mapstructure:"mongodb"`
 	RedisConfig      redisConfig      `mapstructure:"redis"`
 }

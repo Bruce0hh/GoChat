@@ -2,3 +2,10 @@
 server:
   name: "go-chat"
   port: 5757
+# PostgreSQL配置
+postgres:
+  host: "127.0.0.1"
+  port: 5432
+  name: "postgres"
+  password: "postgres"
+  database: "go-chat"

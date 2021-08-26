@@ -9,14 +9,14 @@ func CollectRoute() *gin.Engine {
 
 	r := gin.Default()
 	apiRouter := r.Group("api")
-	UserRouter(apiRouter)
+	userRouter(apiRouter)
 
 	return r
 
 }
 
 // UserRouter 添加用户相关api集合，前缀“/user”
-func UserRouter(r *gin.RouterGroup) {
+func userRouter(r *gin.RouterGroup) {
 
 	_ = r.Group("user")
 	{
