@@ -2,6 +2,7 @@ package router
 
 import (
 	"GoChat/controller"
+	"GoChat/middleware"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,6 +22,8 @@ func userRouter(r *gin.RouterGroup) {
 	userRouter := r.Group("user")
 	{
 		userRouter.POST("register", controller.Register)
+		userRouter.POST("login", controller.Login)
+		userRouter.GET("info", middleware.AuthMiddleWare(), controller.Info)
 	}
 
 }
