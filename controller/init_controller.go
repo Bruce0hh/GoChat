@@ -8,4 +8,5 @@ import (
 var (
 	user model.User
 	db   = config.PostgreSQL
+	rdb  = config.Redis
 )

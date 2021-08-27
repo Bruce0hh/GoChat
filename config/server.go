@@ -34,7 +34,7 @@ type mongoDBConfig struct {
 
 // RedisConfig Redis配置
 type redisConfig struct {
-	Host string `mapstructure:"host"`
-	Port int    `mapstructure:"port"`
-	DB   int    `mapstructure:"db"`
+	Addr     string `mapstructure:"addr"`
+	Password string `mapstructure:"password"`
+	DB       int    `mapstructure:"db"`
 }

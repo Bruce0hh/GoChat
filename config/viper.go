@@ -7,6 +7,7 @@ import (
 var (
 	Viper      = initViper()
 	PostgreSQL = initPostgres()
+	Redis      = initRedis()
 )
 
 // InitViper 初始化viper
