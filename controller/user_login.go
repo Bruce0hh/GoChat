@@ -2,6 +2,7 @@ package controller
 
 import (
 	"GoChat/config"
+	"GoChat/model"
 	"GoChat/service"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
@@ -10,6 +11,8 @@ import (
 )
 
 func Login(ctx *gin.Context) {
+
+	var user model.User
 
 	//获取参数
 	name := ctx.PostForm("username")
@@ -22,7 +25,7 @@ func Login(ctx *gin.Context) {
 		config.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "该账号已经上线")
 		return
 	}
-
+	log.Printf("name: %s", val)
 	//判断用户是否存在
 	if service.IsNameExist(name) {
 		config.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "用户不存在！")

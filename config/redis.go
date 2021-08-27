@@ -8,10 +8,10 @@ import (
 
 // 初始化Redis
 func initRedis() *redis.Client {
-
+	redisConfig := Viper.RedisConfig
 	rdb := redis.NewClient(&redis.Options{
-		Addr: Viper.RedisConfig.Addr,
-		DB:   Viper.RedisConfig.DB,
+		Addr: redisConfig.Addr,
+		DB:   redisConfig.DB,
 	})
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
