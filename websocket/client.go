@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	WebsocketHub interface{}
+	wsHub interface{}
 )
 
 type Client struct {
@@ -25,6 +25,7 @@ type Client struct {
 	sync.RWMutex                        //读写锁
 }
 
+//OnConnection WebSocket连接
 func (c *Client) OnConnection(ctx *gin.Context) (*Client, bool) {
 	//处理错误，恢复现场
 	defer func() {
@@ -46,10 +47,10 @@ func (c *Client) OnConnection(ctx *gin.Context) (*Client, bool) {
 	}
 	//2.初始化一个WebSocket长连接客户端
 	if connect, err := upgrade.Upgrade(ctx.Writer, ctx.Request, nil); err != nil {
-		zap.Error(err.(error))
+		zap.Error(err)
 		return nil, false
 	} else {
-		if hub, ok := WebsocketHub.(*Hub); ok {
+		if hub, ok := wsHub.(*Hub); ok {
 			c.Hub = hub
 		}
 		c.Conn = connect
@@ -63,10 +64,110 @@ func (c *Client) OnConnection(ctx *gin.Context) (*Client, bool) {
 		c.WriteDeadline = time.Second * 35
 	}
 
+	if err := c.SendMessage(websocket.TextMessage, "WebSocket connect Success!"); err != nil {
+		zap.Error(err)
+	}
+
 	//设置最大消息读取长度
 	c.Conn.SetReadLimit(65535)
 	c.Hub.Login <- c
 	c.Status = 1
 	return c, true
 
+}
+
+//SendMessage 发送消息
+func (c *Client) SendMessage(messageType int, message string) (err error) {
+	c.Lock()
+	defer func() {
+		c.Unlock()
+	}()
+	//发送消息，设置本次消息的最大允许时间（s）
+	if err = c.Conn.SetWriteDeadline(time.Now().Add(c.WriteDeadline)); err != nil {
+		zap.Error(err)
+		return err
+	}
+	if err = c.Conn.WriteMessage(messageType, []byte(message)); err != nil {
+		return err
+	} else {
+		return nil
+	}
+}
+
+// ReadPump 实时接收消息
+func (c *Client) ReadPump(callbackOnMessage func(messageType int, receivedMessage []byte),
+	callbackOnError func(err error), callbackOnClose func()) {
+	//回调 OnClose()
+	defer func() {
+		err := recover()
+		if err != nil {
+			zap.Error(err.(error))
+		}
+		callbackOnClose()
+	}()
+
+	for {
+		if c.Status == 1 {
+			message, receivedMessage, err := c.Conn.ReadMessage()
+			if err == nil {
+				callbackOnMessage(message, receivedMessage)
+			} else {
+				callbackOnError(err)
+				break
+			}
+		} else {
+			break
+		}
+	}
+}
+
+//Heartbeat 心跳检测
+func (c *Client) Heartbeat() {
+	//设置一个定时器，周期性地发送心跳包
+	ticker := time.NewTicker(c.PingPeriod)
+	defer func() {
+		err := recover()
+		if err != nil {
+			zap.Error(err.(error))
+		}
+		ticker.Stop()
+	}()
+	//重置 ReadDeadline
+	if c.ReadDeadline == 0 {
+		_ = c.Conn.SetReadDeadline(time.Time{})
+	} else {
+		_ = c.Conn.SetReadDeadline(time.Now().Add(c.ReadDeadline))
+	}
+	// 接收到的消息——pong 服务器发送的消息——ping 实际两者是同一个数据
+	c.Conn.SetPongHandler(func(receivedPong string) error {
+		if c.ReadDeadline <= time.Nanosecond {
+			_ = c.Conn.SetReadDeadline(time.Time{})
+		} else {
+			_ = c.Conn.SetReadDeadline(time.Now().Add(c.ReadDeadline))
+		}
+		return nil
+	})
+
+	for {
+		select {
+		case <-ticker.C:
+			if c.Status == 1 {
+				if err := c.SendMessage(websocket.PingMessage, "Server->Ping->Client"); err != nil {
+					c.HeartbeatFailureTimes++
+					//连续4次未检测到 ping, 即表示下线
+					if c.HeartbeatFailureTimes > 4 {
+						c.Status = 0
+						zap.Error(err)
+						return
+					}
+				} else {
+					if c.HeartbeatFailureTimes > 0 {
+						c.HeartbeatFailureTimes--
+					}
+				}
+			} else {
+				return
+			}
+		}
+	}
 }

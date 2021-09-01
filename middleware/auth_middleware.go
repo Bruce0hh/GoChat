@@ -3,6 +3,7 @@ package middleware
 import (
 	"GoChat/config"
 	"GoChat/model"
+	"GoChat/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -20,7 +21,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 
 		//校验token
 		if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
-			config.Response(ctx, http.StatusUnauthorized, 401, nil, "权限不足！")
+			utils.Response(ctx, http.StatusUnauthorized, 401, nil, "权限不足！")
 			//中间件中断需要Abort
 			ctx.Abort()
 			return
@@ -29,7 +30,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 
 		token, claims, err := config.ParseToken(tokenString)
 		if err != nil || !token.Valid {
-			config.Response(ctx, http.StatusUnauthorized, 401, nil, "权限不足！")
+			utils.Response(ctx, http.StatusUnauthorized, 401, nil, "权限不足！")
 			ctx.Abort()
 			return
 		}
@@ -40,7 +41,7 @@ func AuthMiddleWare() gin.HandlerFunc {
 
 		//若数据库不存在用户信息
 		if result.RowsAffected == 0 {
-			config.Response(ctx, http.StatusUnauthorized, 401, nil, "权限不足！")
+			utils.Response(ctx, http.StatusUnauthorized, 401, nil, "权限不足！")
 			ctx.Abort()
 			return
 		}

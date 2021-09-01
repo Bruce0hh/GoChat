@@ -24,7 +24,8 @@ func (h *Hub) Run() {
 			h.Clients[client] = true
 		case client := <-h.Logout:
 			if _, ok := h.Clients[client]; ok {
-				_ = client
+				_ = client.Conn.Close()
+				delete(h.Clients, client)
 			}
 		}
 	}
