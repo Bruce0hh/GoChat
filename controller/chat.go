@@ -12,12 +12,12 @@ import (
 type Hub struct {
 	Conn      *websocket.Conn
 	DataQueue chan []byte
-	GroupMap  map[string]interface{}
+	ClientMap map[string]interface{}
 }
 
 var (
 	rwlock    sync.RWMutex
-	clientMap map[string]*Hub = make(map[string]*Hub, 0)
+	clientMap = make(map[string]*Hub, 0)
 )
 
 func Chat(ctx *gin.Context) {
@@ -35,7 +35,7 @@ func Chat(ctx *gin.Context) {
 	hub := &Hub{
 		Conn:      connect,
 		DataQueue: make(chan []byte, 100),
-		GroupMap:  make(map[string]interface{}),
+		ClientMap: make(map[string]interface{}),
 	}
 	rwlock.RLock()
 	clientMap[userId] = hub
@@ -43,16 +43,17 @@ func Chat(ctx *gin.Context) {
 
 	go sendProcess(hub)
 	go receiveProcess(hub)
-	sendMessage(userId, []byte("hello, darling"))
+	sendMessage(userId, []byte("hello, darling "+userId))
 
 }
 
 func sendMessage(userId string, message []byte) {
 	rwlock.RLock()
-	if hub, ok := clientMap[userId]; ok {
+	hub, ok := clientMap[userId]
+	rwlock.RUnlock()
+	if ok {
 		hub.DataQueue <- message
 	}
-	rwlock.RUnlock()
 }
 
 func sendProcess(hub *Hub) {
@@ -74,7 +75,8 @@ func receiveProcess(hub *Hub) {
 			zap.Error(err)
 			return
 		}
-		fmt.Println("========================", data)
+		sendMessage("2", data)
+		fmt.Println("========================", string(data))
 	}
 
 }
