@@ -6,10 +6,6 @@ import (
 	"fmt"
 )
 
-var (
-	WsClient interface{}
-)
-
 func main() {
 
 	r := router.CollectRoute()

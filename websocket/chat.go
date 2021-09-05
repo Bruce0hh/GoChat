@@ -1,53 +1,96 @@
 package websocket
 
 import (
+	"GoChat/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+	"net/http"
+	"strconv"
+	"sync"
 )
 
-type WsClient struct {
-	WsClient *Client
+type Client struct {
+	Hub       *Hub
+	Conn      *websocket.Conn
+	DataQueue chan []byte
+	Lock      sync.RWMutex
 }
 
-//OnConnection 开启 WebSocket 连接
-func (ws *WsClient) OnConnection(ctx *gin.Context) (*WsClient, bool) {
-	if client, ok := (&Client{}).OnConnection(ctx); ok {
-		ws.WsClient = client
-		go ws.WsClient.Heartbeat()
-		return ws, true
-	} else {
-		return nil, false
+var (
+	WsClient  interface{}
+	H         = initHub()
+	clientMap = make(map[string]*Client, 0)
+	lock      sync.RWMutex
+)
+
+func initHub() *Hub {
+	WsClient = CreateHubFactory()
+	if wh, ok := WsClient.(*Hub); ok {
+		go wh.Run()
+	}
+	return WsClient.(*Hub)
+}
+
+func Chat(ctx *gin.Context) {
+
+	userId := ctx.Query("userId")
+	upgrade := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
+		return true
+	}}
+	connect, err := upgrade.Upgrade(ctx.Writer, ctx.Request, nil)
+	if err != nil {
+		zap.Error(err)
+		return
+	}
+
+	client := &Client{
+		Hub:       H,
+		Conn:      connect,
+		DataQueue: make(chan []byte, 100),
+	}
+	lock.RLock()
+	H.Login <- client
+	clientMap[userId] = client
+	lock.RUnlock()
+
+	go sendProcess(client)
+	go receiveProcess(client)
+	sendMessage(userId, []byte("hello, darling "+userId))
+}
+
+func sendMessage(userId string, message []byte) {
+	lock.RLock()
+	client, ok := clientMap[userId]
+	lock.RUnlock()
+	if ok {
+		client.DataQueue <- message
 	}
 }
 
-//OnMessage 处理业务消息
-func (ws *WsClient) OnMessage(ctx *gin.Context) {
-	go ws.WsClient.ReadPump(func(messageType int, receivedMessage []byte) {
-		//messageType 消息类型	receivedMessage 服务器收到客户端发来的数据
-		tempMessage := "服务器已经收到========>" + string(receivedMessage)
-		if err := ws.WsClient.SendMessage(messageType, tempMessage); err != nil {
-			zap.Error(err)
-		}
-	}, ws.OnError, ws.OnClose)
-}
-
-// OnError 错误处理
-func (ws *WsClient) OnError(err error) {
-	ws.WsClient.Status = 0
-	zap.Error(err)
-}
-
-//OnClose 关闭客户端
-func (ws *WsClient) OnClose() {
-	ws.WsClient.Hub.Logout <- ws.WsClient
-}
-
-//BroadcastMessage 广播消息
-func (ws *WsClient) BroadcastMessage(message string) {
-	for onlineClients := range ws.WsClient.Hub.Clients {
-		if err := onlineClients.SendMessage(websocket.TextMessage, message); err != nil {
-			zap.Error(err)
+func sendProcess(client *Client) {
+	for {
+		select {
+		case data := <-client.DataQueue:
+			if err := client.Conn.WriteMessage(websocket.TextMessage, data); err != nil {
+				zap.Error(err)
+				return
+			}
 		}
 	}
+}
+
+func receiveProcess(client *Client) {
+	for {
+		_, data, err := client.Conn.ReadMessage()
+		if err != nil {
+			zap.Error(err)
+			return
+		}
+		sendMessage("2", data)
+	}
+}
+
+func Calculate(ctx *gin.Context) {
+	utils.Success(ctx, nil, strconv.Itoa(len(H.Clients)))
 }
