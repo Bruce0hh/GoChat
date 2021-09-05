@@ -10,14 +10,17 @@ type Hub struct {
 	//所有在线客户端的内存地址
 	Clients map[string]*Client
 
+	Broadcast chan []byte
+
 	RWLock sync.RWMutex
 }
 
 func CreateHubFactory() *Hub {
 	return &Hub{
-		Login:   make(chan *Client),
-		Logout:  make(chan *Client),
-		Clients: make(map[string]*Client),
+		Login:     make(chan *Client),
+		Logout:    make(chan *Client),
+		Broadcast: make(chan []byte),
+		Clients:   make(map[string]*Client),
 	}
 }
 
@@ -32,6 +35,7 @@ func (h *Hub) Run() {
 			if _, ok := h.Clients[client.flag]; ok {
 				_ = client.Conn.Close()
 				delete(h.Clients, client.flag)
+				close(client.DataQueue)
 			}
 		}
 	}

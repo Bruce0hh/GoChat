@@ -38,7 +38,9 @@ func initHub() *Hub {
 
 func Chat(ctx *gin.Context) {
 
+	//todo:客户端标识
 	userId := ctx.Query("userId")
+	// http 升级 WebSocket 协议
 	upgrade := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
 		return true
 	}}
@@ -51,7 +53,7 @@ func Chat(ctx *gin.Context) {
 	client := &Client{
 		Hub:       H,
 		Conn:      connect,
-		DataQueue: make(chan []byte, 100),
+		DataQueue: make(chan []byte, 20480),
 		flag:      userId,
 	}
 	//client 注册到 hub
@@ -60,11 +62,7 @@ func Chat(ctx *gin.Context) {
 	go writePump(client)
 	go readPump(client)
 	//todo:不显示消息
-	sendMessage(userId, []byte("hello, darling! "+userId+" ,你已上线"))
-}
-
-func serverWs(client *Client) {
-
+	sendMessage(userId, []byte("hello, darling! "+userId+",你已上线"))
 }
 
 func sendMessage(userId string, message []byte) {
@@ -93,7 +91,10 @@ func writePump(client *Client) {
 func readPump(client *Client) {
 	defer func() {
 		client.Hub.Logout <- client
-		client.Conn.Close()
+		err := client.Conn.Close()
+		if err != nil {
+			return
+		}
 	}()
 	for {
 		_, data, err := client.Conn.ReadMessage()
@@ -101,10 +102,23 @@ func readPump(client *Client) {
 			zap.Error(err)
 			return
 		}
-		if client.flag == "2" {
+
+		//todo: 暂时 demo
+		if client.flag == "admin" {
+			broadcast(data)
+		} else if client.flag == "2" {
 			sendMessage("1", data)
 		} else {
 			sendMessage("2", data)
+		}
+
+	}
+}
+
+func broadcast(message []byte) {
+	for i := range H.Clients {
+		if i != "admin" {
+			sendMessage(H.Clients[i].flag, message)
 		}
 	}
 }
