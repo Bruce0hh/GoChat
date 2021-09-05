@@ -24,9 +24,10 @@ type Client struct {
 var (
 	WsClient interface{}
 	H        = initHub()
-	lock     sync.RWMutex
+	lock     sync.RWMutex // 读写锁
 )
 
+// 全局初始化 Hub
 func initHub() *Hub {
 	WsClient = CreateHubFactory()
 	if wh, ok := WsClient.(*Hub); ok {
@@ -53,14 +54,17 @@ func Chat(ctx *gin.Context) {
 		DataQueue: make(chan []byte, 100),
 		flag:      userId,
 	}
-	//todo: lock map的操作无效了，需要修复
-	lock.RLock()
+	//client 注册到 hub
 	H.Login <- client
-	lock.RUnlock()
 
-	go sendProcess(client)
-	go receiveProcess(client)
-	sendMessage(userId, []byte("hello, darling "+userId))
+	go writePump(client)
+	go readPump(client)
+	//todo:不显示消息
+	sendMessage(userId, []byte("hello, darling! "+userId+" ,你已上线"))
+}
+
+func serverWs(client *Client) {
+
 }
 
 func sendMessage(userId string, message []byte) {
@@ -73,7 +77,7 @@ func sendMessage(userId string, message []byte) {
 }
 
 // 服务端--send-->client 消息接收方
-func sendProcess(client *Client) {
+func writePump(client *Client) {
 	for {
 		select {
 		case data := <-client.DataQueue:
@@ -86,14 +90,22 @@ func sendProcess(client *Client) {
 }
 
 // 服务端<--receive--client 消息发送方
-func receiveProcess(client *Client) {
+func readPump(client *Client) {
+	defer func() {
+		client.Hub.Logout <- client
+		client.Conn.Close()
+	}()
 	for {
 		_, data, err := client.Conn.ReadMessage()
 		if err != nil {
 			zap.Error(err)
 			return
 		}
-		sendMessage("2", data)
+		if client.flag == "2" {
+			sendMessage("1", data)
+		} else {
+			sendMessage("2", data)
+		}
 	}
 }
 
