@@ -6,14 +6,14 @@ type Hub struct {
 	//下线
 	Logout chan *Client
 	//所有在线客户端的内存地址
-	Clients map[*Client]bool
+	Clients map[string]*Client
 }
 
 func CreateHubFactory() *Hub {
 	return &Hub{
 		Login:   make(chan *Client),
 		Logout:  make(chan *Client),
-		Clients: make(map[*Client]bool),
+		Clients: make(map[string]*Client),
 	}
 }
 
@@ -21,11 +21,11 @@ func (h *Hub) Run() {
 	for {
 		select {
 		case client := <-h.Login:
-			h.Clients[client] = true
+			h.Clients[client.flag] = client
 		case client := <-h.Logout:
-			if _, ok := h.Clients[client]; ok {
+			if _, ok := h.Clients[client.flag]; ok {
 				_ = client.Conn.Close()
-				delete(h.Clients, client)
+				delete(h.Clients, client.flag)
 			}
 		}
 	}

@@ -12,7 +12,9 @@ func CollectRoute() *gin.Engine {
 
 	r := gin.Default()
 	apiRouter := r.Group("api")
+	wsRoute := r.Group("ws")
 	userRouter(apiRouter)
+	chatRouter(wsRoute)
 
 	return r
 
@@ -25,8 +27,14 @@ func userRouter(r *gin.RouterGroup) {
 		userRouter.POST("register", controller.Register)
 		userRouter.POST("login", controller.Login)
 		userRouter.GET("info", middleware.AuthMiddleWare(), controller.Info)
-		userRouter.GET("chat", websocket.Chat)
-		userRouter.GET("calculate", websocket.Calculate)
 	}
 
+}
+
+func chatRouter(r *gin.RouterGroup) {
+	chatRouter := r.Group("chat")
+	{
+		chatRouter.GET("", websocket.Chat)
+		chatRouter.GET("calculate", websocket.Calculate)
+	}
 }
