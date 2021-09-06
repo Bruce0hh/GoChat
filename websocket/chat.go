@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"time"
 )
 
 // Client Websocket 客户端结构
@@ -18,6 +19,20 @@ type Client struct {
 	DataQueue chan []byte
 	Lock      sync.RWMutex
 	flag      string
+}
+
+// Message 消息结构体
+type Message struct {
+	Id        int64     //消息Id
+	Sender    string    //消息发送者
+	Receiver  string    //消息接收者
+	Category  uint8     //消息类别：私聊|群聊
+	TimeStamp time.Time // 消息时间戳
+	Content   string    // 消息内容
+	Image     string    // 消息缩略图
+	Url       string    // 媒体 url
+	Memo      string    // 消息备注
+	Amount    string    // 数字相关
 }
 
 // 初始化变量

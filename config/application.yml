@@ -14,3 +14,11 @@ redis:
   addr: "127.0.0.1:6379"
   db: 0
   password: "123456"
+
+# MongoDB 配置
+mongodb:
+  host: "127.0.0.1"
+  post: 27017
+  username: admin
+  password: mongo
+  database: "mongo-chat"

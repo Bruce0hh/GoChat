@@ -8,6 +8,7 @@ var (
 	Viper      = initViper()
 	PostgreSQL = initPostgres()
 	Redis      = initRedis()
+	MongoDB    = initMongoDB()
 )
 
 // InitViper 初始化viper
