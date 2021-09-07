@@ -1,15 +1,17 @@
 package websocket
 
 import (
+	"GoChat/model"
 	"GoChat/utils"
+	"encoding/json"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
+	"log"
 	"net/http"
 	"strconv"
 	"sync"
-	"time"
 )
 
 // Client Websocket 客户端结构
@@ -19,20 +21,6 @@ type Client struct {
 	DataQueue chan []byte
 	Lock      sync.RWMutex
 	flag      string
-}
-
-// Message 消息结构体
-type Message struct {
-	Id        int64     //消息Id
-	Sender    string    //消息发送者
-	Receiver  string    //消息接收者
-	Category  uint8     //消息类别：私聊|群聊
-	TimeStamp time.Time // 消息时间戳
-	Content   string    // 消息内容
-	Image     string    // 消息缩略图
-	Url       string    // 媒体 url
-	Memo      string    // 消息备注
-	Amount    string    // 数字相关
 }
 
 // 初始化变量
@@ -118,14 +106,7 @@ func readPump(client *Client) {
 			return
 		}
 
-		//todo: 暂时 demo
-		if client.flag == "admin" {
-			broadcast(data)
-		} else if client.flag == "2" {
-			sendMessage("1", data)
-		} else {
-			sendMessage("2", data)
-		}
+		dispatcher(client, data)
 
 	}
 }
@@ -143,4 +124,25 @@ func Calculate(ctx *gin.Context) {
 		fmt.Println(i)
 	}
 	utils.Success(ctx, nil, strconv.Itoa(len(H.Clients)))
+}
+
+func dispatcher(client *Client, data []byte) {
+	message := model.Message{Content: string(data), Sender: client.flag}
+
+	msg, err := json.Marshal(message)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	//todo: 保存msg进入MongoDB
+	fmt.Println(msg)
+	//todo: 暂时 demo
+	if client.flag == "admin" {
+		broadcast(data)
+	} else if client.flag == "2" {
+		sendMessage("1", data)
+	} else {
+		sendMessage("2", data)
+	}
+
 }
