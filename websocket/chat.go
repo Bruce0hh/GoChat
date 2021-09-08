@@ -3,6 +3,7 @@ package websocket
 import (
 	"GoChat/config"
 	"GoChat/model"
+	"GoChat/service"
 	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -44,7 +45,7 @@ func Chat(ctx *gin.Context) {
 	upgrade := websocket.Upgrader{
 		//todo: token 判断
 		CheckOrigin: func(r *http.Request) bool {
-			return true
+			return service.CheckUserId(userId, ctx)
 		},
 	}
 	connect, err := upgrade.Upgrade(ctx.Writer, ctx.Request, nil)

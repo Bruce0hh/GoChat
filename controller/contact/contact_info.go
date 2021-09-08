@@ -8,10 +8,6 @@ import (
 	"strconv"
 )
 
-func OnlineNumber() {
-
-}
-
 func Calculate(ctx *gin.Context) {
 	for i := range ws.H.Clients {
 		fmt.Println(i)
