@@ -1,7 +1,8 @@
-package controller
+package user
 
 import (
 	"GoChat/config"
+	"GoChat/controller"
 	"GoChat/model"
 	"GoChat/service"
 	"GoChat/utils"
@@ -20,7 +21,7 @@ func Login(ctx *gin.Context) {
 	password := ctx.PostForm("password")
 
 	//判断用户是否已经上线
-	val, _ := rdb.Get(ctx, name).Result()
+	val, _ := controller.Rdb.Get(ctx, name).Result()
 
 	if val != "" {
 		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "该账号已经上线")
@@ -32,7 +33,7 @@ func Login(ctx *gin.Context) {
 		utils.Response(ctx, http.StatusUnprocessableEntity, 422, nil, "用户不存在！")
 		return
 	}
-	db.Where("username = ?", name).Find(&user)
+	controller.Db.Where("username = ?", name).Find(&user)
 	//判断密码是否正确
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password)); err != nil {
 		utils.Response(ctx, http.StatusBadRequest, 400, nil, "密码错误")
@@ -48,7 +49,7 @@ func Login(ctx *gin.Context) {
 	}
 
 	//将上线状态存入Redis
-	err1 := rdb.Set(ctx, user.Username, token, 0).Err()
+	err1 := controller.Rdb.Set(ctx, user.Username, token, 0).Err()
 	if err1 != nil {
 		utils.Response(ctx, http.StatusInternalServerError, 500, nil, "上线失败")
 		return

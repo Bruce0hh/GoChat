@@ -1,6 +1,7 @@
-package controller
+package user
 
 import (
+	"GoChat/controller"
 	"GoChat/model"
 	"GoChat/service"
 	"GoChat/utils"
@@ -48,7 +49,7 @@ func Register(ctx *gin.Context) {
 		Username: name,
 		Password: string(bcryptPassword),
 	}
-	db.Create(&newUser)
+	controller.Db.Create(&newUser)
 
 	//返回结果
 	utils.Success(ctx, nil, "注册成功")

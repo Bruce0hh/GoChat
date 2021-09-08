@@ -5,6 +5,6 @@ import (
 )
 
 var (
-	db  = config.PostgreSQL
-	rdb = config.Redis
+	Db  = config.PostgreSQL
+	Rdb = config.Redis
 )

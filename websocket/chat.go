@@ -1,17 +1,15 @@
 package websocket
 
 import (
+	"GoChat/config"
 	"GoChat/model"
-	"GoChat/utils"
-	"encoding/json"
-	"fmt"
+	"context"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 	"go.uber.org/zap"
-	"log"
 	"net/http"
-	"strconv"
 	"sync"
+	"time"
 )
 
 // Client Websocket 客户端结构
@@ -41,12 +39,14 @@ func initHub() *Hub {
 
 func Chat(ctx *gin.Context) {
 
-	//todo:客户端标识
-	userId := ctx.Query("userId")
+	userId := ctx.Query("sender")
 	// http 升级 WebSocket 协议
-	upgrade := websocket.Upgrader{CheckOrigin: func(r *http.Request) bool {
-		return true
-	}}
+	upgrade := websocket.Upgrader{
+		//todo: token 判断
+		CheckOrigin: func(r *http.Request) bool {
+			return true
+		},
+	}
 	connect, err := upgrade.Upgrade(ctx.Writer, ctx.Request, nil)
 	if err != nil {
 		zap.Error(err)
@@ -63,14 +63,13 @@ func Chat(ctx *gin.Context) {
 	H.Login <- client
 
 	go writePump(client)
-	go readPump(client)
-	//todo:不显示消息
-	sendMessage(userId, []byte("hello, darling! "+userId+",你已上线"))
+	go readPump(client, ctx)
+
 }
 
-func sendMessage(userId string, message []byte) {
+func sendMessage(receiverId string, message []byte) {
 	lock.RLock()
-	client, ok := H.Clients[userId]
+	client, ok := H.Clients[receiverId]
 	lock.RUnlock()
 	if ok {
 		client.DataQueue <- message
@@ -91,7 +90,7 @@ func writePump(client *Client) {
 }
 
 // 服务端<--receive--client 消息发送方
-func readPump(client *Client) {
+func readPump(client *Client, ctx *gin.Context) {
 	defer func() {
 		client.Hub.Logout <- client
 		err := client.Conn.Close()
@@ -105,8 +104,9 @@ func readPump(client *Client) {
 			zap.Error(err)
 			return
 		}
-
-		dispatcher(client, data)
+		//todo: 从前端传来的 data 应该为一个 Message 结构体的 Json
+		// 解析 Message
+		dispatcher(client, data, ctx)
 
 	}
 }
@@ -119,30 +119,24 @@ func broadcast(message []byte) {
 	}
 }
 
-func Calculate(ctx *gin.Context) {
-	for i := range H.Clients {
-		fmt.Println(i)
+func dispatcher(client *Client, data []byte, ctx *gin.Context) {
+	message := model.Message{
+		Content:   string(data),
+		TimeStamp: time.Now(),
+		Receiver:  ctx.Query("receiverId"),
+		Sender:    client.flag,
 	}
-	utils.Success(ctx, nil, strconv.Itoa(len(H.Clients)))
-}
-
-func dispatcher(client *Client, data []byte) {
-	message := model.Message{Content: string(data), Sender: client.flag}
-
-	msg, err := json.Marshal(message)
+	_, err := config.MongoDB.Collection("message").InsertOne(context.Background(), message)
 	if err != nil {
-		log.Println(err.Error())
 		return
 	}
-	//todo: 保存msg进入MongoDB
-	fmt.Println(msg)
 	//todo: 暂时 demo
 	if client.flag == "admin" {
 		broadcast(data)
-	} else if client.flag == "2" {
-		sendMessage("1", data)
 	} else {
-		sendMessage("2", data)
+		receiver := ctx.Query("receiverId")
+		if receiver != "" {
+			sendMessage(receiver, data)
+		}
 	}
-
 }

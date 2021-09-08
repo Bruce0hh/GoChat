@@ -9,13 +9,12 @@ import (
 )
 
 func initMongoDB() *mongo.Database {
-	username := Viper.MongoDBConfig.Name
-	password := Viper.MongoDBConfig.Password
+	host := Viper.MongoDBConfig.Host
+	port := Viper.MongoDBConfig.Port
 	database := Viper.MongoDBConfig.Database
 
-	uri := "mongodb://%s:%s@%s:27017/go-chat"
-	uri = fmt.Sprintf(uri, username, password, database)
-
+	uri := "mongodb://%s:%d/%s"
+	uri = fmt.Sprintf(uri, host, port, database)
 	// 连接客户端配置
 	clientOptions := options.Client().ApplyURI(uri)
 	// 连接到 MongoDB

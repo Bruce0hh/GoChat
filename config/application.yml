@@ -18,7 +18,6 @@ redis:
 # MongoDB 配置
 mongodb:
   host: "127.0.0.1"
-  post: 27017
-  username: admin
-  password: mongo
-  database: "mongo-chat"
+  port: 27017
+  password: "mongo"
+  database: "go-chat"
