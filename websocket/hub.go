@@ -1,6 +1,10 @@
 package websocket
 
-import "sync"
+import (
+	"GoChat/service"
+	"context"
+	"sync"
+)
 
 type Hub struct {
 	//上线
@@ -34,6 +38,7 @@ func (h *Hub) Run() {
 		case client := <-h.Logout:
 			if _, ok := h.Clients[client.flag]; ok {
 				_ = client.Conn.Close()
+				service.DelToken(client.flag, context.Background())
 				delete(h.Clients, client.flag)
 				close(client.DataQueue)
 			}
