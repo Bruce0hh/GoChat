@@ -23,7 +23,7 @@ func Success(ctx *gin.Context, data gin.H, msg string) {
 
 func Fail(ctx *gin.Context, code int, data gin.H, msg string) {
 	ctx.JSON(http.StatusOK, gin.H{
-		"code": 20,
+		"code": 0,
 		"data": data,
 		"msg":  msg,
 	})
