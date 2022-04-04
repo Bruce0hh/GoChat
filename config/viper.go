@@ -17,7 +17,7 @@ func initViper() GlobalConfig {
 	//实例化viper
 	v := viper.New()
 	//viper读取配置文件
-	v.SetConfigFile("config/application.yml")
+	v.SetConfigFile("resource/application.yml")
 	if err := v.ReadInConfig(); err != nil {
 		panic(err)
 	}
