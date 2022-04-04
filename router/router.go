@@ -27,6 +27,7 @@ func userRouter(r *gin.RouterGroup) {
 	{
 		userRouter.POST("register", user.Register)
 		userRouter.POST("login", user.Login)
+		userRouter.GET("logout", user.Logout)
 		userRouter.GET("info", middleware.AuthMiddleWare(), user.Info)
 	}
 

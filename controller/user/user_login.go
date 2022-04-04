@@ -14,7 +14,7 @@ import (
 
 func Login(ctx *gin.Context) {
 
-	var user model.User
+	var user *model.User
 
 	//获取参数
 	name := ctx.PostForm("username")
@@ -41,14 +41,14 @@ func Login(ctx *gin.Context) {
 	}
 
 	//发放Token
-	token, err := config.ReleaseToken(user)
+	token, err := config.ReleaseToken(*user)
 	if err != nil {
 		utils.Response(ctx, http.StatusInternalServerError, 500, nil, "生成token失败")
 		log.Printf("token generate error : %v\n", err)
 		return
 	}
 
-	//将上线状态存入Redis
+	//将上线状态存入Redis todo:存入用户id作为key，而非名字
 	err1 := controller.Rdb.Set(ctx, user.Username, token, 0).Err()
 	if err1 != nil {
 		utils.Response(ctx, http.StatusInternalServerError, 500, nil, "上线失败")
