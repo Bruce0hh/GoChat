@@ -1,8 +1,8 @@
 package contact
 
 import (
+	ws "GoChat/controller/websocket"
 	"GoChat/utils"
-	ws "GoChat/websocket"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"strconv"
