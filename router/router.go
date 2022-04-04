@@ -2,7 +2,7 @@ package router
 
 import (
 	"GoChat/controller/rest/contact"
-	user2 "GoChat/controller/rest/user"
+	users "GoChat/controller/rest/user"
 	"GoChat/controller/websocket"
 	"GoChat/middleware"
 	"github.com/gin-gonic/gin"
@@ -25,10 +25,10 @@ func CollectRoute() *gin.Engine {
 func userRouter(r *gin.RouterGroup) {
 	userRouter := r.Group("user")
 	{
-		userRouter.POST("register", user2.Register)
-		userRouter.POST("login", user2.Login)
-		userRouter.GET("logout", user2.Logout)
-		userRouter.GET("info", middleware.AuthMiddleWare(), user2.Info)
+		userRouter.POST("register", users.Register)
+		userRouter.POST("login", users.Login)
+		userRouter.GET("logout", users.Logout)
+		userRouter.GET("info", middleware.AuthMiddleWare(), users.Info)
 	}
 
 }

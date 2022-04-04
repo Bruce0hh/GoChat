@@ -112,6 +112,7 @@ func readPump(client *Client, ctx *gin.Context) {
 	}
 }
 
+// 广播功能
 func broadcast(message []byte) {
 	for i := range H.Clients {
 		if i != "admin" {
@@ -120,24 +121,27 @@ func broadcast(message []byte) {
 	}
 }
 
+// 解析消息并存入 MongoDB
 func dispatcher(client *Client, data []byte, ctx *gin.Context) {
-	message := model.Message{
+	message := &model.Message{
 		Content:   string(data),
 		TimeStamp: time.Now(),
 		Receiver:  ctx.Query("receiverId"),
 		Sender:    client.flag,
 	}
-	_, err := config.MongoDB.Collection("message").InsertOne(context.Background(), message)
-	if err != nil {
-		return
-	}
 	//todo: 暂时 demo
 	if client.flag == "admin" {
+		message.Category = 8
 		broadcast(data)
 	} else {
+		message.Category = 0
 		receiver := ctx.Query("receiverId")
 		if receiver != "" {
 			sendMessage(receiver, data)
 		}
+	}
+	_, err := config.MongoDB.Collection("message").InsertOne(context.Background(), message)
+	if err != nil {
+		return
 	}
 }
